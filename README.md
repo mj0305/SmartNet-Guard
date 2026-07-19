@@ -175,8 +175,8 @@ DENIED:UNKNOWN_FACE_SCORE_xx: Verification rejected due to low confidence.
 ### Network Topology: Designed specifically as an edge-node sentinel rather than a centralized, distributed core network analyzer.
 
 ## 👨‍💻 Author
-Tan Minjun
-Bachelor of Information Technology (Honours) Communications and Networking, UTAR.
+###Tan Minjun
+###Bachelor of Information Technology (Honours) Communications and Networking, UTAR.
 Networking Professional specializing in edge security and network visibility solutions.
 
 
