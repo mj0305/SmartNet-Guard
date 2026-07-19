@@ -48,7 +48,7 @@ A Scapy-based sentinel that monitors `wlan0`. It aggregates packets and computes
 
 ### 3. Math Core Engine (Node-RED)
 
-<img width="600" height="400" alt="image" src="docs/CoreMathEngine" />
+<img width="600" height="400" alt="image" src="docs/CoreMathEngine.png" />
 The central intelligence. It calculates **Z-Score anomalies** to detect DDoS volumetric floods.
 
 **Logic Definition**:
