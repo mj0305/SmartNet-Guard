@@ -8,12 +8,14 @@
   <b>Bridging the Complexity-Visibility Gap in Edge Network Infrastructure.</b>
 </p>
 
----
 
 ## 📌 Project Overview
 A robust, host-based edge security sentinel designed to bridge the complexity-visibility gap in modern network administration. Engineered specifically for resource-constrained edge environments like the Raspberry Pi, this system provides real-time packet telemetry, automated volumetric threat mitigation, and a "Zero-Trust" biometric access gateway without the overhead of enterprise-grade security suites.
 
-This project focuses on L3-L4 anomaly detection and interactive remote management, serving as a transparent analytical and defensive tool for organizational network perimeters.## 📂 Project Structure```bash
+
+This project focuses on L3-L4 anomaly detection and interactive remote management, serving as a transparent analytical and defensive tool for organizational network perimeters.## 📂 Project Structure
+
+```bash
 SmartNet-Guard/
 │
 ├── data/                   # Log exports and historical threat captures
@@ -33,7 +35,9 @@ SmartNet-Guard/
 ├── requirements.txt        # Python dependency list
 ├── .gitignore              # Ignored files (e.g., __pycache__, tokens, admin.jpg)
 └── README.md               # Core project documentation
-✨ Key Features
+```
+
+##✨ Key Features
 Dual-Bus Architecture: Decouples the computational Math Engine from the UI and Alerting services, ensuring high-availability monitoring without interface latency.
 Automated Threat Interception (IPS): Dynamically interfaces with Linux iptables to block malicious IP addresses instantly upon threshold breaches.
 AI Biometric Gateway: Utilizes NPU-accelerated InsightFace models to require physical administrative verification before activating probe sensors.
