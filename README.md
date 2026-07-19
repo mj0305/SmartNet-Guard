@@ -3,8 +3,6 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Active-brightgreen.svg">
   <img src="https://img.shields.io/badge/Platform-RaspberryPi-blue.svg">
-  <img src="https://img.shields.io/badge/Security-IPS_Engine-red.svg">
-  <img src="https://img.shields.io/badge/Auth-Biometric_FaceID-purple.svg">
 </p>
 
 <p align="center">
@@ -57,13 +55,14 @@ The central intelligence. It calculates **Z-Score anomalies** to detect DDoS vol
 * **Logic**: `zScore = (currentPPS - mean) / stdDev`[cite: 7].
 
 
-### 👤4. Biometric Enrollment & Verification (`face_auth.py` & `local_face_api.py`)
+### 4. Biometric Enrollment & Verification (`face_auth.py` & `local_face_api.py`)
 ![BiometricEnrollment-Verification2](docs/BiometricEnrollment-Verification2.png)
 The system enforces strict biometric access control to prevent unauthorized tampering.
 
 Uses the **InsightFace (antelopev2)** model to perform 1:1 cosine similarity matching[cite: 1, 2].
 
 * **Key Code**: `sim = np.dot(emb1, emb2) / (norm1 * norm2)`[cite: 2].
+
 **A. Enrollment (Registration)**
 To register the administrator, capture a reference image and save it to the system:
 ```bash
@@ -81,14 +80,14 @@ DENIED:NO_FACE_DETECTED: Capture failed to identify facial features.
 
 ![Dashboard](docs/BiometricEnrollment-Verification.png)
 
-###🛠️ Deployment ProtocolStart AI Backend: Ensure the recognition API is running as a background service[cite: 1]:
+🛠️ Deployment ProtocolStart AI Backend: Ensure the recognition API is running as a background service[cite: 1]:
 ```Bash
 sudo python3 /home/mj/face_auth.py
 ```
 
 ### 🛠️ Modules & Features
 
-<img src="docs/Telegram.jpg" width="700">
+<img src="docs/telegram.jpg" width="700">
 
 ### Telegram Integration (`node-red-contrib-telegrambot`)
 
