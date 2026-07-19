@@ -1,0 +1,1208 @@
+[
+    {
+        "id": "3ad35fb3ec9b6551",
+        "type": "tab",
+        "label": "⚙️ V9/V11 Total Security Engine",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "29533a136316deda",
+        "type": "ui_button",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Trigger Face Auth",
+        "group": "283a575fa7a22afb",
+        "order": 1,
+        "width": 6,
+        "height": 1,
+        "passthru": false,
+        "label": "📸 Trigger Face Auth",
+        "tooltip": "Wake edge probe for biometric check",
+        "color": "white",
+        "bgcolor": "darkblue",
+        "payload": "auth",
+        "payloadType": "str",
+        "topic": "auth",
+        "x": 130,
+        "y": 120,
+        "wires": [
+            [
+                "01799052ecf5de9a",
+                "6c4584e65b5c9d2b"
+            ]
+        ]
+    },
+    {
+        "id": "01799052ecf5de9a",
+        "type": "change",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Set Status: Capturing",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{\"status\":\"capturing\"}",
+                "tot": "json"
+            }
+        ],
+        "x": 380,
+        "y": 80,
+        "wires": [
+            [
+                "122c7c0e91bc3ae7"
+            ]
+        ]
+    },
+    {
+        "id": "6c4584e65b5c9d2b",
+        "type": "exec",
+        "z": "3ad35fb3ec9b6551",
+        "command": "sudo python3 /home/mj/face_auth.py",
+        "addpay": false,
+        "append": "",
+        "useSpawn": "false",
+        "name": "Face Auth Python Execution",
+        "x": 400,
+        "y": 160,
+        "wires": [
+            [
+                "9f2154c3f61002e8"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "9f2154c3f61002e8",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Auth Result Parser",
+        "func": "let out = (msg.payload || \"\").toString().trim();\nlet success = false;\nlet message = \"\";\nlet name = \"Admin\";\nlet kb = { reply_markup: { keyboard: [[{text:\"/status\"},{text:\"/on\"}],[{text:\"/off\"},{text:\"/reset\"}]], resize_keyboard: true } };\n\nif (out.includes(\"AUTHORIZED\")) {\n    if (out.includes(\":\")) name = out.split(\":\")[1].trim();\n    success = true;\n    message = \"✅ Auth Success: \" + name;\n    global.set(\"auth_status\", true);\n} else {\n    let reason = \"UNKNOWN\";\n    if (out.includes(\"DENIED:\")) reason = out.split(\"DENIED:\")[1].trim();\n    success = false;\n    message = \"🚫 Auth Failed: \" + reason;\n    global.set(\"auth_status\", false);\n}\n\nmsg.authResult = { success: success, message: message };\nmsg.filename = \"/tmp/auth_frame.jpg\";\n\nlet startMsg = success ? { payload: \"start\" } : null;\nlet tgMsg = { \n    payload: { \n        chatId: \"8105394541\", \n        type: \"message\", \n        content: success ? \"✅ Face ID verified. System unlocked & probe active.\" : \"🚫 Face ID failed. Access denied.\",\n        options: kb\n    } \n};\nlet lcdMsg = success ? null : { payload: \"\\\"ACCESS DENIED \\\\nADMIN ONLY \\\"\" };\n\nreturn [msg, startMsg, tgMsg, lcdMsg];",
+        "outputs": 4,
+        "x": 650,
+        "y": 160,
+        "wires": [
+            [
+                "d026f04b2fbb9acf"
+            ],
+            [
+                "2a2327bea1ba32af"
+            ],
+            [
+                "f10aa23f5bb4d166"
+            ],
+            [
+                "46dc3ed9772e816f"
+            ]
+        ]
+    },
+    {
+        "id": "d026f04b2fbb9acf",
+        "type": "file in",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Read Snapshot File",
+        "filename": "filename",
+        "filenameType": "msg",
+        "format": "",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 1030,
+        "y": 160,
+        "wires": [
+            [
+                "1459021f72261a3e"
+            ]
+        ]
+    },
+    {
+        "id": "1459021f72261a3e",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Encode Base64 for UI",
+        "func": "let result = msg.authResult || { success: false, message: \"Unknown Error\" };\nlet base64 = \"\";\n\nif (Buffer.isBuffer(msg.payload)) {\n    base64 = msg.payload.toString(\"base64\");\n}\n\nmsg.payload = {\n    status: \"result\",\n    success: result.success,\n    message: result.message,\n    image: base64\n};\nreturn msg;",
+        "outputs": 1,
+        "x": 1040,
+        "y": 100,
+        "wires": [
+            [
+                "122c7c0e91bc3ae7"
+            ]
+        ]
+    },
+    {
+        "id": "122c7c0e91bc3ae7",
+        "type": "ui_template",
+        "z": "3ad35fb3ec9b6551",
+        "group": "283a575fa7a22afb",
+        "name": "📸 Dashboard Viewfinder",
+        "order": 2,
+        "width": "6",
+        "height": "6",
+        "format": "<div style=\"text-align:center; padding:15px; background:#111; color:white; border-radius:8px; border: 1px solid #333; height:100%; display:flex; flex-direction:column; justify-content:center;\">\n    <div ng-if=\"!msg.payload || (!msg.payload.status)\">\n        <i class=\"fa fa-lock fa-4x\" style=\"color:#555; margin-bottom:15px;\"></i>\n        <p style=\"color:#888;\">System Locked<br>Click button above for Face ID Auth</p>\n    </div>\n    \n    <div ng-if=\"msg.payload.status === 'capturing'\">\n        <i class=\"fa fa-camera fa-spin fa-4x\" style=\"color:#00bcff; margin-bottom:15px; animation: pulse 1s infinite;\"></i>\n        <h4 style=\"color:#00bcff;\">Waking up NPU...</h4>\n        <p style=\"color:#aaa; font-size:12px;\">Please look at the camera for 5s</p>\n    </div>\n    \n    <div ng-if=\"msg.payload.status === 'result'\">\n        <img ng-if=\"msg.payload.image\"\n             ng-src=\"data:image/jpeg;base64,{{msg.payload.image}}\" \n             style=\"max-width:100%; max-height:180px; border-radius:6px; border:3px solid {{msg.payload.success ? '#00ff00' : '#ff0000'}}; box-shadow: 0 0 15px {{msg.payload.success ? '#00ff00' : '#ff0000'}}; margin-bottom:10px;\" />\n        <div ng-if=\"!msg.payload.image\" style=\"padding:20px; border:2px dashed #ff0000; color:#ff0000; margin-bottom:10px;\">\n            ⚠️ Failed to read camera stream\n        </div>\n        <h3 style=\"color:{{msg.payload.success ? '#00ff00' : '#ff0000'}}; margin-top:0;\">\n            {{msg.payload.message}}\n        </h3>\n    </div>\n</div>\n\n<style>\n@keyframes pulse {\n  0% { transform: scale(0.95); opacity: 0.5; }\n  50% { transform: scale(1.1); opacity: 1; }\n  100% { transform: scale(0.95); opacity: 0.5; }\n}\n</style>",
+        "storeOutMessages": true,
+        "fwdInMessages": false,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 1050,
+        "y": 40,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "caa5869c51f1cbfb",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "🔐 Auth Gate Tracker",
+        "func": "let isAuth = global.get(\"auth_status\") || false;\nif (isAuth) {\n    return [msg, null];\n} else {\n    node.warn(\"Startup rejected: Unauthorized!\");\n    let lcdMsg = { payload: \"\\\"ACCESS DENIED \\\\nAUTH REQUIRED \\\"\" };\n    return [null, lcdMsg];\n}",
+        "outputs": 2,
+        "x": 380,
+        "y": 260,
+        "wires": [
+            [
+                "2a2327bea1ba32af"
+            ],
+            [
+                "46dc3ed9772e816f"
+            ]
+        ]
+    },
+    {
+        "id": "a01f7cceffc23c74",
+        "type": "ui_button",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Start Real",
+        "group": "6dbf6cf6c42ea25e",
+        "order": 1,
+        "width": 3,
+        "height": 1,
+        "passthru": false,
+        "label": "▶️ Start Live Probe",
+        "tooltip": "Launch live socket sniffer",
+        "color": "white",
+        "bgcolor": "green",
+        "payload": "start",
+        "payloadType": "str",
+        "topic": "control",
+        "x": 160,
+        "y": 260,
+        "wires": [
+            [
+                "caa5869c51f1cbfb"
+            ]
+        ]
+    },
+    {
+        "id": "a668d5e0347e5bca",
+        "type": "ui_button",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Stop Real",
+        "group": "6dbf6cf6c42ea25e",
+        "order": 2,
+        "width": 3,
+        "height": 1,
+        "passthru": false,
+        "label": "🛑 Stop Live Probe",
+        "tooltip": "Kill live sniffer",
+        "color": "white",
+        "bgcolor": "#b30000",
+        "payload": "stop",
+        "payloadType": "str",
+        "topic": "control",
+        "x": 160,
+        "y": 320,
+        "wires": [
+            [
+                "4c90a4b9d010dbfd"
+            ]
+        ]
+    },
+    {
+        "id": "5fba392b51057dc7",
+        "type": "ui_button",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Sim 30 PPS",
+        "group": "6dbf6cf6c42ea25e",
+        "order": 3,
+        "width": 2,
+        "height": 1,
+        "passthru": false,
+        "label": "🟢 Baseline (30 PPS)",
+        "tooltip": "Inject Baseline Traffic",
+        "color": "white",
+        "bgcolor": "teal",
+        "payload": "30",
+        "payloadType": "str",
+        "topic": "simulation",
+        "x": 150,
+        "y": 420,
+        "wires": [
+            [
+                "a3c17eb5b957c444"
+            ]
+        ]
+    },
+    {
+        "id": "62d429aded041943",
+        "type": "ui_button",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Sim 120 PPS",
+        "group": "6dbf6cf6c42ea25e",
+        "order": 4,
+        "width": 2,
+        "height": 1,
+        "passthru": false,
+        "label": "🚨 Flood (120 PPS)",
+        "tooltip": "Inject DDoS Flood",
+        "color": "white",
+        "bgcolor": "darkred",
+        "payload": "120",
+        "payloadType": "str",
+        "topic": "simulation",
+        "x": 150,
+        "y": 480,
+        "wires": [
+            [
+                "a3c17eb5b957c444"
+            ]
+        ]
+    },
+    {
+        "id": "97728d10f3de45f2",
+        "type": "ui_button",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Stop Sim",
+        "group": "6dbf6cf6c42ea25e",
+        "order": 5,
+        "width": 2,
+        "height": 1,
+        "passthru": false,
+        "label": "⏹️ Stop Simulation",
+        "tooltip": "Cut simulation plane",
+        "color": "black",
+        "bgcolor": "lightgrey",
+        "payload": "off",
+        "payloadType": "str",
+        "topic": "simulation",
+        "x": 160,
+        "y": 540,
+        "wires": [
+            [
+                "a3c17eb5b957c444"
+            ]
+        ]
+    },
+    {
+        "id": "05d4ca10ef99709e",
+        "type": "ui_button",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Master Reset",
+        "group": "6dbf6cf6c42ea25e",
+        "order": 6,
+        "width": 6,
+        "height": 1,
+        "passthru": false,
+        "label": "🔄 Master Deep Reset",
+        "tooltip": "Wipe all logs, drop iptables rules, lock auth",
+        "color": "white",
+        "bgcolor": "#ff5500",
+        "payload": "reset",
+        "payloadType": "str",
+        "topic": "control",
+        "x": 150,
+        "y": 620,
+        "wires": [
+            [
+                "95784d681c5ba977"
+            ]
+        ]
+    },
+    {
+        "id": "a3c17eb5b957c444",
+        "type": "change",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Latch Sim Globals",
+        "rules": [
+            {
+                "t": "set",
+                "p": "sim_mode",
+                "pt": "global",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "x": 370,
+        "y": 480,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2a2327bea1ba32af",
+        "type": "exec",
+        "z": "3ad35fb3ec9b6551",
+        "command": "sudo python3 /home/mj/edge_probe_v2.py",
+        "addpay": false,
+        "append": "",
+        "useSpawn": "true",
+        "name": "Run Python Sniffer",
+        "x": 1030,
+        "y": 220,
+        "wires": [
+            [],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "4c90a4b9d010dbfd",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Safe Stop Handler",
+        "func": "global.set(\"sim_mode\", \"off\");\nglobal.set(\"auth_status\", false);\nlet off = { payload: 0 };\nlet clearLCD = { payload: \"\\\"System Stopped  \\\\nMonitoring OFF  \\\"\" };\nlet dummyData = { pps: 0, ip: \"0.0.0.0\", zscore: 0, state: 0, avg_len: 0 };\nreturn [clearLCD, off, off, off, off, dummyData, {payload: \"kill\"}];",
+        "outputs": 7,
+        "x": 370,
+        "y": 360,
+        "wires": [
+            [
+                "46dc3ed9772e816f"
+            ],
+            [
+                "8c44defc5360b469"
+            ],
+            [
+                "f533db5832b0c3dc"
+            ],
+            [
+                "a276491fb0255977"
+            ],
+            [
+                "dd1e33f2470339cb"
+            ],
+            [
+                "3f173f318c35c86b"
+            ],
+            [
+                "fcb4b36acb5e7b35"
+            ]
+        ]
+    },
+    {
+        "id": "95784d681c5ba977",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Master Deep Clear Reset",
+        "func": "global.set(\"sim_mode\", \"off\");\nglobal.set(\"attack_count\", 0);\nglobal.set(\"global_ip\", \"0.0.0.0\");\nglobal.set(\"global_zscore\", 0);\nglobal.set(\"global_pps\", 0);\nglobal.set(\"attack_history\", []);\nglobal.set(\"blocked_ips\", []);\nglobal.set(\"math_core_reset\", true);\nglobal.set(\"auth_status\", false);\n\nlet off = { payload: 0 };\nlet emptyArr = { payload: [] };\nreturn [\n    { payload: \"\\\"Protection Reset \\\\nSystem Standby  \\\"\" },\n    off, off, off, off,\n    emptyArr, emptyArr,\n    { payload: \"sudo iptables -F\" },\n    { payload: \"kill\" },\n    emptyArr,\n    emptyArr\n];",
+        "outputs": 11,
+        "x": 390,
+        "y": 620,
+        "wires": [
+            [
+                "46dc3ed9772e816f"
+            ],
+            [
+                "8c44defc5360b469"
+            ],
+            [
+                "f533db5832b0c3dc"
+            ],
+            [
+                "a276491fb0255977"
+            ],
+            [
+                "dd1e33f2470339cb"
+            ],
+            [
+                "36bdc6df73b358bb"
+            ],
+            [
+                "492592875341bbdf"
+            ],
+            [
+                "b3cc8f71ae18c9a3"
+            ],
+            [
+                "fcb4b36acb5e7b35"
+            ],
+            [
+                "cfe16926b89f883e"
+            ],
+            [
+                "ecdfb26695b031f6"
+            ]
+        ]
+    },
+    {
+        "id": "fcb4b36acb5e7b35",
+        "type": "exec",
+        "z": "3ad35fb3ec9b6551",
+        "command": "sudo pkill -f edge_probe_v2.py",
+        "addpay": false,
+        "append": "",
+        "useSpawn": "false",
+        "name": "Kill Python Process",
+        "x": 1110,
+        "y": 640,
+        "wires": [
+            [],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "06d29021e27dcf71",
+        "type": "telegram receiver",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Telegram Chat Inbound",
+        "bot": "",
+        "saveDataDir": "",
+        "filterCommands": false,
+        "x": 160,
+        "y": 1200,
+        "wires": [
+            [
+                "e86fc2a5fb9385f9"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "e86fc2a5fb9385f9",
+        "type": "switch",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Route Commands",
+        "property": "payload.content",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "/status",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "/on",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "/off",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "/reset",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 4,
+        "x": 390,
+        "y": 1200,
+        "wires": [
+            [
+                "d57721921c7f38bf"
+            ],
+            [
+                "9fe7ee045a203dc8"
+            ],
+            [
+                "b4f355773a5908ca"
+            ],
+            [
+                "b32c811e2c93c729"
+            ]
+        ]
+    },
+    {
+        "id": "d57721921c7f38bf",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Build Report Card",
+        "func": "let cid = msg.payload.chatId || \"8105394541\";\nlet history = global.get(\"attack_history\") || [];\nlet mode = global.get(\"sim_mode\") || \"off\";\nlet auth = global.get(\"auth_status\") ? \"✅ Unlocked (Active)\" : \"🔒 Locked\";\nlet kb = { reply_markup: { keyboard: [[{text:\"/status\"},{text:\"/on\"}],[{text:\"/off\"},{text:\"/reset\"}]], resize_keyboard: true } };\n\nlet statusText = \"📊 SYSTEM PROFILE REPORT CARD 📊\\n\\n\";\nstatusText += \"⚙️ Access Status: \" + auth + \"\\n\";\nstatusText += \"⚙️ Sim Profile: \" + mode.toUpperCase() + \"\\n\\n\";\nstatusText += \"🕒 Recent Interceptions:\\n\";\nif (history.length === 0) {\n    statusText += \"No recent threats detected.\\n\";\n} else {\n    let limit = Math.min(5, history.length);\n    for(let i=0; i<limit; i++) {\n        let rec = history[i];\n        statusText += (i+1) + \". IP: \" + rec[\"IP\"] + \" | PPS: \" + rec[\"PPS\"] + \"\\n\";\n    }\n}\nmsg.payload = { chatId: cid, type: \"message\", content: statusText, options: kb };\nreturn msg;",
+        "outputs": 1,
+        "x": 650,
+        "y": 1160,
+        "wires": [
+            [
+                "f10aa23f5bb4d166"
+            ]
+        ]
+    },
+    {
+        "id": "9fe7ee045a203dc8",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Cmd: Start Real (Auth Check)",
+        "func": "let cid = msg.payload.chatId || \"8105394541\";\nlet originalMsg = msg;\nlet isAuth = global.get(\"auth_status\") || false;\nlet kb = { reply_markup: { keyboard: [[{text:\"/status\"},{text:\"/on\"}],[{text:\"/off\"},{text:\"/reset\"}]], resize_keyboard: true } };\n\nif (isAuth) {\n    originalMsg.payload = { chatId: cid, type: \"message\", content: \"✅ **SYSTEM CONTROL**\\nLive edge probe STARTED successfully.\", options: kb };\n    let execMsg = { payload: \"start\" };\n    return [originalMsg, execMsg];\n} else {\n    originalMsg.payload = { chatId: cid, type: \"message\", content: \"🚫 **ACCESS DENIED**\\nSystem is locked. Please authenticate via Face ID locally first.\", options: kb };\n    return [originalMsg, null];\n}",
+        "outputs": 2,
+        "x": 680,
+        "y": 1200,
+        "wires": [
+            [
+                "f10aa23f5bb4d166"
+            ],
+            [
+                "2a2327bea1ba32af"
+            ]
+        ]
+    },
+    {
+        "id": "b4f355773a5908ca",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Cmd: Stop Real",
+        "func": "let cid = msg.payload.chatId || \"8105394541\";\nlet originalMsg = msg;\nlet kb = { reply_markup: { keyboard: [[{text:\"/status\"},{text:\"/on\"}],[{text:\"/off\"},{text:\"/reset\"}]], resize_keyboard: true } };\n\noriginalMsg.payload = { chatId: cid, type: \"message\", content: \"🛑 **SYSTEM CONTROL**\\nLive edge probe STOPPED and locked.\", options: kb };\nlet triggerMsg = { payload: \"stop\" };\nreturn [originalMsg, triggerMsg];",
+        "outputs": 2,
+        "x": 640,
+        "y": 1240,
+        "wires": [
+            [
+                "f10aa23f5bb4d166"
+            ],
+            [
+                "4c90a4b9d010dbfd"
+            ]
+        ]
+    },
+    {
+        "id": "b32c811e2c93c729",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Cmd: Master Reset",
+        "func": "let cid = msg.payload.chatId || \"8105394541\";\nlet originalMsg = msg;\nlet kb = { reply_markup: { keyboard: [[{text:\"/status\"},{text:\"/on\"}],[{text:\"/off\"},{text:\"/reset\"}]], resize_keyboard: true } };\n\noriginalMsg.payload = { chatId: cid, type: \"message\", content: \"🔄 **SYSTEM CONTROL**\\nMaster Deep Clean executed. All logs, locks, and hardware states reset.\", options: kb };\nlet triggerMsg = { payload: \"reset\" };\nreturn [originalMsg, triggerMsg];",
+        "outputs": 2,
+        "x": 650,
+        "y": 1300,
+        "wires": [
+            [
+                "f10aa23f5bb4d166"
+            ],
+            [
+                "76d9d6093eaaba79"
+            ]
+        ]
+    },
+    {
+        "id": "4e5811e5223df0e1",
+        "type": "inject",
+        "z": "3ad35fb3ec9b6551",
+        "name": "1s System Clock",
+        "props": [],
+        "repeat": "1",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 150,
+        "y": 820,
+        "wires": [
+            [
+                "67b17f7ec0dcaba3"
+            ]
+        ]
+    },
+    {
+        "id": "67b17f7ec0dcaba3",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "State-Driven Matrix Router",
+        "func": "let mode = global.get(\"sim_mode\") || \"off\";\nif (mode === \"30\") {\n    msg.payload = { pps: 30, top_ip: \"192.168.1.100\", min_pps: 15, avg_len: 64, zone: \"EXTERNAL\" };\n    return [msg, null];\n} else if (mode === \"120\") {\n    msg.payload = { pps: 120, top_ip: \"192.168.1.144\", min_pps: 40, avg_len: 1200, zone: \"EXTERNAL\" };\n    return [msg, null];\n} else {\n    return [null, msg];\n}",
+        "outputs": 2,
+        "x": 180,
+        "y": 760,
+        "wires": [
+            [
+                "42e3f51f823a76fb"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "fb144ccd2287391d",
+        "type": "udp in",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Live UDP Rx",
+        "iface": "",
+        "port": "5005",
+        "ipv": "udp4",
+        "multicast": "false",
+        "group": "",
+        "datatype": "utf8",
+        "x": 110,
+        "y": 900,
+        "wires": [
+            [
+                "f5c22083c3e7d91c"
+            ]
+        ]
+    },
+    {
+        "id": "f5c22083c3e7d91c",
+        "type": "json",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Normalize Data",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 320,
+        "y": 900,
+        "wires": [
+            [
+                "42e3f51f823a76fb"
+            ]
+        ]
+    },
+    {
+        "id": "42e3f51f823a76fb",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Math Core Engine",
+        "func": "let windowSize = 25;\nlet attackCount = global.get(\"attack_count\") || 0;\nif (global.get(\"math_core_reset\") === true) {\n    context.set(\"values\", []);\n    context.set(\"ipHitMap\", {});\n    context.set(\"lastState\", 0);\n    global.set(\"math_core_reset\", false);\n}\nlet values = context.get(\"values\") || [];\nlet d = msg.payload;\nif (!d || typeof d.pps === \"undefined\" || d.top_ip === \"0.0.0.0\") return null;\n\nlet currentPPS = Number(d.pps);\nlet topIP = d.top_ip || \"Unknown\";\nlet zone = d.zone || \"UNKNOWN\";\n\nvalues.push(currentPPS);\nif (values.length > windowSize) values.shift();\ncontext.set(\"values\", values);\nlet sum = values.reduce((a, b) => a + b, 0);\nlet mean = sum / (values.length || 1);\nlet variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (values.length || 1);\nlet stdDev = Math.sqrt(variance);\nlet zScore = stdDev === 0 ? 0 : (currentPPS - mean) / stdDev;\n\nlet state = 0;\nlet isWarning = (currentPPS > 80 || zScore > 3.0);\nlet ipHitMap = context.get(\"ipHitMap\") || {};\nlet nowSec = Math.floor(Date.now() / 1000);\n\nif (isWarning) {\n    let hitHistory = ipHitMap[topIP] || [];\n    hitHistory.push(nowSec);\n    hitHistory = hitHistory.filter(t => (nowSec - t) <= 5);\n    ipHitMap[topIP] = hitHistory;\n    if (hitHistory.length >= 2) {\n        state = 2; // RED (Block Table)\n    } else {\n        state = 1; // ORANGE (Threat Table)\n    }\n} else {\n    if (ipHitMap[topIP]) {\n        ipHitMap[topIP] = ipHitMap[topIP].filter(t => (nowSec - t) <= 5);\n    }\n    state = 0; // GREEN\n}\ncontext.set(\"ipHitMap\", ipHitMap);\n\nlet lastState = context.get(\"lastState\") || 0;\nlet isNewAttack = (state === 2 && lastState !== 2);\ncontext.set(\"lastState\", state);\nif (isNewAttack) attackCount += 1;\n\nglobal.set(\"global_ip\", topIP);\nglobal.set(\"global_zscore\", Number(zScore.toFixed(2)));\nglobal.set(\"global_pps\", currentPPS);\nglobal.set(\"attack_count\", attackCount);\n\nmsg.payload = {\n    pps: currentPPS,\n    ip: topIP,\n    zscore: Number(zScore.toFixed(2)),\n    state: state,\n    zone: zone,\n    is_new_attack: isNewAttack,\n    total_attacks: attackCount,\n    avg_len: d.avg_len || 0\n};\nreturn msg;",
+        "outputs": 1,
+        "x": 470,
+        "y": 760,
+        "wires": [
+            [
+                "6c4c2795943f2cb5",
+                "2defb2e9426d7955",
+                "353f448824022998",
+                "1fc1462c27a8336d",
+                "e83bf627b8abd31a"
+            ]
+        ]
+    },
+    {
+        "id": "6c4c2795943f2cb5",
+        "type": "link out",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Engine Metrics Bus",
+        "mode": "link",
+        "links": [
+            "1cf012fd61fe420d"
+        ],
+        "x": 685,
+        "y": 860,
+        "wires": []
+    },
+    {
+        "id": "1cf012fd61fe420d",
+        "type": "link in",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Local Distribution Bus",
+        "links": [
+            "6c4c2795943f2cb5"
+        ],
+        "x": 65,
+        "y": 1060,
+        "wires": [
+            [
+                "a23b01f8e65e1a41",
+                "5594fe5ab04ecbaf",
+                "3f173f318c35c86b",
+                "ba4f366f2ed605f6"
+            ]
+        ]
+    },
+    {
+        "id": "e83bf627b8abd31a",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "All Traffic Log Filter",
+        "func": "let d = msg.payload;\nif (global.get(\"math_core_reset\") === true || (Array.isArray(d) && d.length === 0)) {\n    context.set(\"all_history\", []);\n    msg.payload = [];\n    return msg;\n}\n\nlet history = context.get(\"all_history\") || [];\nlet timeStr = new Date().toLocaleTimeString();\nhistory.unshift({\n    Time: timeStr,\n    IP: d.ip || \"Unknown\",\n    PPS: d.pps,\n    \"Z-Score\": typeof d.zscore === \"number\" ? d.zscore.toFixed(2) : d.zscore,\n    Status: d.state === 2 ? \"🚨\" : (d.state === 1 ? \"🟡\" : \"🟢\")\n});\nif (history.length > 15) history.pop();\ncontext.set(\"all_history\", history);\nmsg.payload = history;\nreturn msg;",
+        "outputs": 1,
+        "x": 750,
+        "y": 740,
+        "wires": [
+            [
+                "ecdfb26695b031f6"
+            ]
+        ]
+    },
+    {
+        "id": "ba4f366f2ed605f6",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Format Telegram Message",
+        "func": "if (!msg.payload || !msg.payload.is_new_attack) return null;\n\nlet d = msg.payload;\nlet kb = { reply_markup: { keyboard: [[{text:\"/status\"},{text:\"/on\"}],[{text:\"/off\"},{text:\"/reset\"}]], resize_keyboard: true } };\nlet alertMsg = \"🚨 ALERT: Volumetric DDoS Flood Detected! 🚨\\n\\n🎯 Malicious Source IP: \" + d.ip + \"\\n📊 Telemetry Traffic: \" + d.pps + \" PPS\\n📈 Deviation Index (Z): \" + d.zscore + \"\\n⚠️ Cumulative Interceptions: \" + d.total_attacks + \"\\n\\n[Linux Kernel Netfilter automated mitigation initiated]\";\nmsg.payload = { chatId: \"8105394541\", type: \"message\", content: alertMsg, options: kb };\nreturn msg;",
+        "outputs": 1,
+        "x": 360,
+        "y": 1100,
+        "wires": [
+            [
+                "f10aa23f5bb4d166"
+            ]
+        ]
+    },
+    {
+        "id": "5594fe5ab04ecbaf",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Threat Log (Heuristic Accumulator)",
+        "func": "let history = context.get(\"history\") || [];\nlet d = msg.payload;\nif (global.get(\"math_core_reset\") === true || (Array.isArray(d) && d.length === 0)) {\n    context.set(\"history\", []);\n    global.set(\"attack_history\", []);\n    msg.payload = [];\n    return msg;\n}\nconst NORMAL_ZONES = [\"INTERNAL\", \"LOCALHOST\"];\nif (d && typeof d.pps !== \"undefined\") {\n    let isThreat = (d.state === 1 || d.state === 2);\n    let isNormal = NORMAL_ZONES.includes(d.zone);\n    if (isThreat && !isNormal) {\n        let timeStr = new Date().toLocaleTimeString();\n        let lastRecord = history.length > 0 ? history[0] : null;\n        if (!lastRecord || lastRecord.ip !== d.ip || lastRecord.time !== timeStr) {\n            history.unshift({\n                time: timeStr, IP: d.ip, PPS: d.pps,\n                Z_Score: d.zscore, Zone: d.zone || \"UNKNOWN\"\n            });\n            if (history.length > 15) history.pop();\n            context.set(\"history\", history);\n            global.set(\"attack_history\", history);\n        }\n    }\n}\nmsg.payload = history;\nreturn msg;",
+        "outputs": 1,
+        "x": 380,
+        "y": 980,
+        "wires": [
+            [
+                "36bdc6df73b358bb"
+            ]
+        ]
+    },
+    {
+        "id": "3f173f318c35c86b",
+        "type": "ui_template",
+        "z": "3ad35fb3ec9b6551",
+        "group": "6fa86bce4eccb283",
+        "name": "📟 Digital Twin Panel",
+        "order": 1,
+        "width": 6,
+        "height": 5,
+        "format": "<div style=\"font-family:monospace; background:#111; color:#00ff00; padding:15px; border-radius:8px; border:2px solid #333; height:90%;\">\n  <div style=\"margin-bottom:8px;\">🎯 <b>TARGET IP</b>: <span style=\"color:#fff;\">{{msg.payload.ip}}</span></div>\n  <div style=\"margin-bottom:8px;\">📊 <b>TRAFFIC </b>: <span style=\"color:#ffcc00; font-weight:bold;\">{{msg.payload.pps}} PPS</span></div>\n  <div style=\"margin-bottom:4px;\">📈 <b>Z-SCORE </b>: <span style=\"color:#ff9900;\">{{msg.payload.zscore}}</span></div>\n  <div style=\"margin-bottom:12px;\">📦 <b>AVG LEN </b>: <span style=\"color:#00bcff;\">{{msg.payload.avg_len}} Bytes</span></div>\n  <hr style=\"border-color:#222; margin:10px 0;\">\n  <div style=\"display:flex; justify-content:space-between; align-items:center; margin-top:15px; background:#1a1a1a; padding:10px; border-radius:6px;\">\n    <div style=\"text-align:center; flex:1;\">\n      <div style=\"width:22px; height:22px; border-radius:50%; margin:0 auto 4px; background:{{msg.payload.state===0?'#00FF00':'#113311'}}; box-shadow:{{msg.payload.state===0?'0 0 12px #00FF00':'none'}};\"></div>\n      <span style=\"font-size:10px; color:{{msg.payload.state===0?'#00FF00':'#555'}}; font-weight:bold;\">G-LED</span>\n    </div>\n    <div style=\"text-align:center; flex:1;\">\n      <div style=\"width:22px; height:22px; border-radius:50%; margin:0 auto 4px; background:{{msg.payload.state===1?'#FFFF00':'#333311'}}; box-shadow:{{msg.payload.state===1?'0 0 12px #FFFF00':'none'}};\"></div>\n      <span style=\"font-size:10px; color:{{msg.payload.state===1?'#FFFF00':'#555'}}; font-weight:bold;\">Y-LED</span>\n    </div>\n    <div style=\"text-align:center; flex:1;\">\n      <div style=\"width:22px; height:22px; border-radius:50%; margin:0 auto 4px; background:{{msg.payload.state===2?'#FF0000':'#331111'}}; box-shadow:{{msg.payload.state===2?'0 0 15px #FF0000':'none'}}; animation:{{msg.payload.state===2?'blink 0.4s infinite':'none'}};\"></div>\n      <span style=\"font-size:10px; color:{{msg.payload.state===2?'#FF0000':'#555'}}; font-weight:bold;\">R-LED</span>\n    </div>\n  </div>\n</div>",
+        "storeOutMessages": false,
+        "fwdInMessages": false,
+        "x": 760,
+        "y": 1080,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a23b01f8e65e1a41",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "UI Chart Formatter",
+        "func": "if(Array.isArray(msg.payload)) return msg;\nmsg.payload = msg.payload.pps;\nreturn msg;",
+        "outputs": 1,
+        "x": 330,
+        "y": 1040,
+        "wires": [
+            [
+                "cfe16926b89f883e"
+            ]
+        ]
+    },
+    {
+        "id": "353f448824022998",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "LCD Formatter (Rate Limited)",
+        "func": "let d = msg.payload;\nif (!d || typeof d.pps === \"undefined\") return null;\n\nlet now = Date.now();\nlet lastTime = context.get(\"lastTime\") || 0;\nif (now - lastTime < 1500) return null;\ncontext.set(\"lastTime\", now);\n\nlet cleanIP = d.ip || \"Unknown\";\nlet line1 = (\"Z:\" + Number(d.zscore).toFixed(1) + \" P:\" + d.pps + \"          \").substring(0, 16);\nlet line2 = (\"IP:\" + cleanIP + \"          \").substring(0, 16);\nmsg.payload = \"\\\"\" + line1 + \"\\\\n\" + line2 + \"\\\"\";\nreturn msg;",
+        "outputs": 1,
+        "x": 710,
+        "y": 320,
+        "wires": [
+            [
+                "46dc3ed9772e816f"
+            ]
+        ]
+    },
+    {
+        "id": "2defb2e9426d7955",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "GPIO Driver Multiplexer",
+        "func": "let d = msg.payload;\nlet state = d.state;\nreturn [\n    { payload: state === 0 ? 1 : 0 },\n    { payload: state === 1 ? 1 : 0 },\n    { payload: state === 2 ? 1 : 0 },\n    { payload: state === 2 ? 1 : 0 }\n];",
+        "outputs": 4,
+        "x": 710,
+        "y": 480,
+        "wires": [
+            [
+                "8c44defc5360b469"
+            ],
+            [
+                "f533db5832b0c3dc"
+            ],
+            [
+                "a276491fb0255977"
+            ],
+            [
+                "dd1e33f2470339cb"
+            ]
+        ]
+    },
+    {
+        "id": "46dc3ed9772e816f",
+        "type": "exec",
+        "z": "3ad35fb3ec9b6551",
+        "command": "sudo python3 /home/mj/display_lcd.py",
+        "addpay": true,
+        "append": "",
+        "useSpawn": "false",
+        "name": "Exec display_lcd.py",
+        "x": 1030,
+        "y": 300,
+        "wires": [
+            [],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "cfe16926b89f883e",
+        "type": "ui_chart",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Dashboard Chart",
+        "group": "6fa86bce4eccb283",
+        "order": 1,
+        "width": "6",
+        "height": 6,
+        "label": "Real-time Throughput (PPS)",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "Gathering Frames...",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "",
+        "removeOlder": "1",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": "",
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#00ff00",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 750,
+        "y": 1020,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "36bdc6df73b358bb",
+        "type": "ui_table",
+        "z": "3ad35fb3ec9b6551",
+        "group": "d36c965756459222",
+        "name": "Threat Log Table",
+        "order": 1,
+        "width": 8,
+        "height": 6,
+        "columns": [],
+        "outputs": 0,
+        "cts": false,
+        "x": 1110,
+        "y": 740,
+        "wires": []
+    },
+    {
+        "id": "ecdfb26695b031f6",
+        "type": "ui_table",
+        "z": "3ad35fb3ec9b6551",
+        "group": "e3e68d5a9a6a02bb",
+        "name": "All Traffic Log",
+        "order": 1,
+        "width": 8,
+        "height": 6,
+        "columns": [],
+        "outputs": 0,
+        "cts": false,
+        "x": 1100,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "8c44defc5360b469",
+        "type": "rpi-gpio out",
+        "z": "3ad35fb3ec9b6551",
+        "name": "🟢 Green LED",
+        "pin": "22",
+        "set": true,
+        "level": "0",
+        "bcm": true,
+        "x": 1020,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "f533db5832b0c3dc",
+        "type": "rpi-gpio out",
+        "z": "3ad35fb3ec9b6551",
+        "name": "🟡 Yellow LED",
+        "pin": "27",
+        "set": true,
+        "level": "0",
+        "bcm": true,
+        "x": 1020,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "a276491fb0255977",
+        "type": "rpi-gpio out",
+        "z": "3ad35fb3ec9b6551",
+        "name": "🔴 Red LED",
+        "pin": "17",
+        "set": true,
+        "level": "0",
+        "bcm": true,
+        "x": 1010,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "dd1e33f2470339cb",
+        "type": "rpi-gpio out",
+        "z": "3ad35fb3ec9b6551",
+        "name": "🔊 Buzzer",
+        "pin": "23",
+        "set": true,
+        "level": "0",
+        "bcm": true,
+        "x": 1020,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "1fc1462c27a8336d",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "🛡️ Dynamic IPS Governor",
+        "func": "let blocked = global.get(\"blocked_ips\") || [];\nlet d = msg.payload;\nconst NORMAL_ZONES = [\"INTERNAL\", \"LOCALHOST\"];\nlet isThreat = d && typeof d.pps !== \"undefined\"\n    && d.state === 2\n    && !NORMAL_ZONES.includes(d.zone);\nif (isThreat) {\n    let ip = d.ip;\n    if (ip && ip !== \"Unknown\" && ip !== \"0.0.0.0\" && !blocked.some(b => b.IP === ip)) {\n        blocked.unshift({\n            \"IP\": ip,\n            \"Blocked Time\": new Date().toLocaleTimeString(),\n            \"Action\": \"❌ Unlock\"\n        });\n        global.set(\"blocked_ips\", blocked);\n        return [\n            { payload: \"sudo iptables -I INPUT -s \" + ip + \" -j DROP\" },\n            { payload: blocked }\n        ];\n    }\n}\nreturn null;",
+        "outputs": 2,
+        "x": 780,
+        "y": 800,
+        "wires": [
+            [
+                "b221cb5aa3052f7c"
+            ],
+            [
+                "9724623510764271"
+            ]
+        ]
+    },
+    {
+        "id": "9724623510764271",
+        "type": "ui_table",
+        "z": "3ad35fb3ec9b6551",
+        "group": "d36c965756459222",
+        "name": "Active Firewall Blocks",
+        "order": 2,
+        "width": 8,
+        "height": 4,
+        "columns": [],
+        "outputs": 1,
+        "cts": false,
+        "x": 1000,
+        "y": 920,
+        "wires": [
+            [
+                "3ce3f1ed15d11140"
+            ]
+        ]
+    },
+    {
+        "id": "3ce3f1ed15d11140",
+        "type": "function",
+        "z": "3ad35fb3ec9b6551",
+        "name": "🔄 Interactive Unblock Core",
+        "func": "let clickedRow = msg.payload;\nlet blocked = global.get(\"blocked_ips\") || [];\nif (clickedRow && clickedRow.IP) {\n    let ipToUnblock = clickedRow.IP;\n    blocked = blocked.filter(b => b.IP !== ipToUnblock);\n    global.set(\"blocked_ips\", blocked);\n    return [\n        { payload: \"sudo iptables -D INPUT -s \" + ipToUnblock + \" -j DROP\" },\n        { payload: blocked }\n    ];\n}\nreturn null;",
+        "outputs": 2,
+        "x": 1260,
+        "y": 920,
+        "wires": [
+            [
+                "b221cb5aa3052f7c"
+            ],
+            [
+                "9724623510764271"
+            ]
+        ]
+    },
+    {
+        "id": "b221cb5aa3052f7c",
+        "type": "exec",
+        "z": "3ad35fb3ec9b6551",
+        "command": "",
+        "addpay": true,
+        "append": "",
+        "useSpawn": "false",
+        "name": "iptables Core Executor",
+        "x": 1280,
+        "y": 800,
+        "wires": [
+            [],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "1583a6ecc3889754",
+        "type": "link in",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Master Derp Clear Reset",
+        "links": [
+            "b3cc8f71ae18c9a3"
+        ],
+        "x": 1055,
+        "y": 860,
+        "wires": [
+            [
+                "b221cb5aa3052f7c"
+            ]
+        ]
+    },
+    {
+        "id": "b3cc8f71ae18c9a3",
+        "type": "link out",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Master Derp Clear Reset",
+        "mode": "link",
+        "links": [
+            "1583a6ecc3889754"
+        ],
+        "x": 645,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "fa82e2b199d0c74d",
+        "type": "link in",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Master Derp Clear Reset 2",
+        "links": [
+            "492592875341bbdf"
+        ],
+        "x": 765,
+        "y": 920,
+        "wires": [
+            [
+                "9724623510764271"
+            ]
+        ]
+    },
+    {
+        "id": "492592875341bbdf",
+        "type": "link out",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Master Derp Clear Reset 2",
+        "mode": "link",
+        "links": [
+            "fa82e2b199d0c74d"
+        ],
+        "x": 645,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "f4f5cd0779a71d0d",
+        "type": "link in",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Master Derp Clear Reset 3",
+        "links": [
+            "76d9d6093eaaba79"
+        ],
+        "x": 195,
+        "y": 680,
+        "wires": [
+            [
+                "95784d681c5ba977"
+            ]
+        ]
+    },
+    {
+        "id": "76d9d6093eaaba79",
+        "type": "link out",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Master Derp Clear Reset 3",
+        "mode": "link",
+        "links": [
+            "f4f5cd0779a71d0d"
+        ],
+        "x": 855,
+        "y": 1340,
+        "wires": []
+    },
+    {
+        "id": "f10aa23f5bb4d166",
+        "type": "telegram sender",
+        "z": "3ad35fb3ec9b6551",
+        "name": "Telegram Send",
+        "bot": "",
+        "haserroroutput": false,
+        "outputs": 1,
+        "x": 1080,
+        "y": 1160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "283a575fa7a22afb",
+        "type": "ui_group",
+        "name": "2. Biometric Auth Terminal",
+        "tab": "a561ce9b74cafa91",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "6dbf6cf6c42ea25e",
+        "type": "ui_group",
+        "name": "System Control & Simulation Center",
+        "tab": "a561ce9b74cafa91",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "6fa86bce4eccb283",
+        "type": "ui_group",
+        "name": "Live Metrics & Hardware Telemetry",
+        "tab": "a561ce9b74cafa91",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "d36c965756459222",
+        "type": "ui_group",
+        "name": "Threat Interception Table",
+        "tab": "a561ce9b74cafa91",
+        "order": 3,
+        "disp": true,
+        "width": "8",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "e3e68d5a9a6a02bb",
+        "type": "ui_group",
+        "name": "All Traffic Log",
+        "tab": "a561ce9b74cafa91",
+        "order": 4,
+        "disp": true,
+        "width": "8",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "a561ce9b74cafa91",
+        "type": "ui_tab",
+        "name": "V9 Modular Console",
+        "icon": "dashboard",
+        "order": 1
+    }
+]
