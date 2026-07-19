@@ -64,29 +64,29 @@ The system enforces strict biometric access control to prevent unauthorized tamp
 Uses the **InsightFace (antelopev2)** model to perform 1:1 cosine similarity matching[cite: 1, 2].
 
 * **Key Code**: `sim = np.dot(emb1, emb2) / (norm1 * norm2)`[cite: 2].
-## A. Enrollment (Registration)
+**A. Enrollment (Registration)**
 To register the administrator, capture a reference image and save it to the system:
 ```bash
 sudo rpicam-still -t 3000 --width 640 --height 480 -o /home/mj/admin.jpg
 ```
 
 Ensure the image is well-lit and clearly shows your face as it will serve as the unique authentication template. 
-![Dashboard](docs/BiometricEnrollment-Verification.png)
 
 
-B. Verification (Access Check)The system utilizes face_auth.py to initiate secure access control. Upon execution, the system performs a live capture (/tmp/auth_frame.jpg) and compares the similarity score against your admin.jpg template.  Bashsudo python3 /home/mj/face_auth.py
+**B. Verification (Access Check)**
+The system utilizes face_auth.py to initiate secure access control. Upon execution, the system performs a live capture (/tmp/auth_frame.jpg) and compares the similarity score against your admin.jpg template.  Bashsudo python3 /home/mj/face_auth.py
 AUTHORIZED:mj: Access granted; probe and control services are enabled.
 DENIED:UNKNOWN_FACE_SCORE_xx: Verification rejected due to low confidence.
 DENIED:NO_FACE_DETECTED: Capture failed to identify facial features.
+
+![Dashboard](docs/BiometricEnrollment-Verification.png)
 
 ###🛠️ Deployment ProtocolStart AI Backend: Ensure the recognition API is running as a background service[cite: 1]:
 ```Bash
 sudo python3 /home/mj/face_auth.py
 ```
 
-
-
-## 🛠️ Modules & Features
+### 🛠️ Modules & Features
 
 <img src="docs/Telegram.jpg" width="700">
 
