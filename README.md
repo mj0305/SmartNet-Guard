@@ -37,7 +37,7 @@ SmartNet-Guard/
 └── README.md               # Core project documentation
 ```
 
-##✨ Key Features
+## ✨ Key Features
 Dual-Bus Architecture: Decouples the computational Math Engine from the UI and Alerting services, ensuring high-availability monitoring without interface latency.
 Automated Threat Interception (IPS): Dynamically interfaces with Linux iptables to block malicious IP addresses instantly upon threshold breaches.
 AI Biometric Gateway: Utilizes NPU-accelerated InsightFace models to require physical administrative verification before activating probe sensors.
@@ -110,53 +110,71 @@ To register the administrator, capture a reference image and save it to the syst
 sudo rpicam-still -t 3000 --width 640 --height 480 -o /home/mj/admin.jpg
 ```
 
-🛠️ Integrated Features
+### 🛠️ Integrated Features
 Telegram Integration (node-red-contrib-telegrambot)
-![Telegram](docs/telegram.png)
-Allows remote administration. It broadcasts DDoS alerts and accepts control commands like /on, /off, /reset, and /status via an interactive inline keyboard.
-Dashboard & Metrics (node-red-dashboard)
-Provides a real-time digital twin of the network, synchronized across Threat Logs, All Traffic Logs, and Active Firewall Blocks tables, ensuring full network visibility.
-IPS & Dynamic Governor
-Automatically injects iptables rules when a threat reaches a critical state. It features a heuristic hit-map system to distinguish between transient warnings and persistent attacks.
-🔧 Deployment
-	Requirements: Raspberry Pi, Node-RED, InsightFace dependencies.
-	Setup AI Backend: Enable the background facial recognition microservice.
-Bash
-nohup python3 /home/mj/local_face_api.py > api.log 2>&1 &
-	Flow Deployment: Import the provided flows.json and configure your chatId in the Telegram function nodes.
 
-📸 Operational Visuals & Deployment
+![Telegram](docs/telegram.png)
+
+Allows remote administration. It broadcasts DDoS alerts and accepts control commands like /on, /off, /reset, and /status via an interactive inline keyboard.
+
+### Dashboard & Metrics (node-red-dashboard)
+Provides a real-time digital twin of the network, synchronized across Threat Logs, All Traffic Logs, and Active Firewall Blocks tables, ensuring full network visibility.
+
+### IPS & Dynamic Governor
+Automatically injects iptables rules when a threat reaches a critical state. It features a heuristic hit-map system to distinguish between transient warnings and persistent attacks.
+
+### 🔧 Deployment
+Requirements: Raspberry Pi, Node-RED, InsightFace dependencies.
+Setup AI Backend: Enable the background facial recognition microservice.
+
+```Bash
+nohup python3 /home/mj/local_face_api.py > api.log 2>&1 &
+```
+Flow Deployment: Import the provided flows.json and configure your chatId in the Telegram function nodes.
+
+### 📸 Operational Visuals & Deployment
 Dashboard & Metrics (node-red-dashboard)
 Provides a real-time digital twin of the network, synchronized across Threat Logs, All Traffic Logs, and Active Firewall Blocks tables, ensuring full network visibility.
 Telegram Integration (node-red-contrib-telegrambot)
+
 Allows remote administration. It broadcasts DDoS alerts and accepts control commands like /on, /off, /reset, and /status via an interactive inline keyboard.
-🚀 Installation & Setup
+
+### 🚀 Installation & Setup
 Prerequisites
 	Hardware: Raspberry Pi (3B+ or higher recommended) with an active Camera Module.
 	Operating System: Raspberry Pi OS with 8GB Swap memory enabled to prevent OOM termination.
 	Node-RED Dependencies: dashboard, telegrambot, influxdb, pi-gpio, ui-table.
-Quick Start
-	Clone the repository:
-Bash
+
+### Quick Start
+Clone the repository:
+```Bash
 git clone [https://github.com/yourusername/SmartNet-Guard.git](https://github.com/yourusername/SmartNet-Guard.git)
 cd SmartNet-Guard
-	Start AI Backend: Ensure the recognition API is running as a background service:
-Bash
-nohup python3 /home/mj/local_face_api.py > api.log 2>&1 &
-	Register Administrator (Enrollment): Capture a reference image and save it to the system.
-Bash
+```
+	
+### Start AI Backend: Ensure the recognition API is running as a background service:
+```Bash
+sudo python3 /home/mj/local_face_api.py > api.log 2>&1 &
+```
+### Register Administrator (Enrollment): Capture a reference image and save it to the system.
+```Bash
 sudo rpicam-still -t 3000 --width 640 --height 480 -o /home/mj/admin.jpg
-	Flows: Import the provided flows.json and configure your chatId in the Telegram function nodes.
-	Verification (Access Check):
-Bash
+```
+### Flows: Import the provided flows.json and configure your chatId in the Telegram function nodes.
+Verification (Access Check):
+
+```Bash
 sudo python3 /home/mj/face_auth.py
-	AUTHORIZED:mj: Access granted; probe and control services are enabled.
-	DENIED:UNKNOWN_FACE_SCORE_xx: Verification rejected due to low confidence.
-🛡️ Scope & Limitations
-	Traffic Capacity: Optimized for edge constraints. Extreme volumetric attacks exceeding the Raspberry Pi's NIC hardware limits may result in packet drop before analysis.
-	Authentication Constraints: The facial recognition gateway requires adequate ambient lighting. Infrared (IR) capture is not supported in the base hardware configuration.
-	Network Topology: Designed specifically as an edge-node sentinel rather than a centralized, distributed core network analyzer.
-👨‍💻 Author
+```
+AUTHORIZED:mj: Access granted; probe and control services are enabled.
+DENIED:UNKNOWN_FACE_SCORE_xx: Verification rejected due to low confidence.
+
+## 🛡️ Scope & Limitations
+### Traffic Capacity: Optimized for edge constraints. Extreme volumetric attacks exceeding the Raspberry Pi's NIC hardware limits may result in packet drop before analysis.
+### Authentication Constraints: The facial recognition gateway requires adequate ambient lighting. Infrared (IR) capture is not supported in the base hardware configuration.
+### Network Topology: Designed specifically as an edge-node sentinel rather than a centralized, distributed core network analyzer.
+
+## 👨‍💻 Author
 Tan Minjun
 Bachelor of Information Technology (Honours) Communications and Networking, UTAR.
 Networking Professional specializing in edge security and network visibility solutions.
