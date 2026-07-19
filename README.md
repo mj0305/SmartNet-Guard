@@ -44,7 +44,8 @@ Provides physical status updates. It uses a **No-Clear-Write** methodology to up
 
 <img width="600" height="400" alt="image" src="docs/Network_Sniffer.png" />
 A Scapy-based sentinel that monitors `wlan0`. It aggregates packets and computes telemetry data locally before pushing it to the Math Engine.
-*   **Key Code**: `sniff(iface=TARGET_INTERFACE, prn=packet_callback, store=0)`
+
+**Key Code**: `sniff(iface=TARGET_INTERFACE, prn=packet_callback, store=0)`
 
 ### 3. Math Core Engine (Node-RED)
 
