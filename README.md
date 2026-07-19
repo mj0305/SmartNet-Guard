@@ -1,10 +1,10 @@
 # 🛡️ Edge-Security-Sentinel
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-Active-brightgreen.svg" alt="Status">
-  <img src="https://img.shields.io/badge/Platform-RaspberryPi-blue.svg" alt="Platform">
-  <img src="https://img.shields.io/badge/Security-IPS_Engine-red.svg" alt="Security">
-  <img src="https://img.shields.io/badge/Auth-Biometric_FaceID-purple.svg" alt="Auth">
+  <img src="https://img.shields.io/badge/Status-Active-brightgreen.svg" alt="Status" />
+  <img src="https://img.shields.io/badge/Platform-Raspberry%20Pi-blue.svg" alt="Platform" />
+  <img src="https://img.shields.io/badge/Security-IPS%20Engine-red.svg" alt="Security" />
+  <img src="https://img.shields.io/badge/Auth-Biometric%20Face%20ID-purple.svg" alt="Auth" />
 </p>
 
 <p align="center">
