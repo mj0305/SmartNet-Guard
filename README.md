@@ -2,9 +2,6 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Status-Active-brightgreen.svg" alt="Status" />
-  <img src="https://img.shields.io/badge/Platform-Raspberry%20Pi-blue.svg" alt="Platform" />
-  <img src="https://img.shields.io/badge/Security-IPS%20Engine-red.svg" alt="Security" />
-  <img src="https://img.shields.io/badge/Auth-Biometric%20Face%20ID-purple.svg" alt="Auth" />
 </p>
 
 <p align="center">
@@ -39,6 +36,8 @@ The system is built on a decoupled architecture for maximum stability:
 
 ### 1. Hardware Interface (`display_lcd.py`)
 ![Hardware](docs/Hardware.png)
+
+<img width="600" height="400" alt="image" src="docs/Hardware.png" />
 Provides physical status updates. It uses a **No-Clear-Write** methodology to update 20x4 LCD screens, preventing flickering and character garbage.
 *   **Key Code**: `lcd.cursor_pos = (0, 0); lcd.write_string(lines[0][:20])`
 
