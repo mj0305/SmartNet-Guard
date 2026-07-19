@@ -1,22 +1,37 @@
-# SmartNet-Guard
-A modular edge network security monitoring system featuring real-time traffic analysis, DDoS threat interception (IPS), and AI-based biometric authentication (Face ID) for system access control.
-
 # 🛡️ Edge-Security-Sentinel
 
-## 🚀 Overview
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Active-brightgreen.svg">
+  <img src="https://img.shields.io/badge/Platform-RaspberryPi-blue.svg">
+  <img src="https://img.shields.io/badge/Security-IPS_Engine-red.svg">
+  <img src="https://img.shields.io/badge/Auth-Biometric_FaceID-purple.svg">
+</p>
 
-**Edge-Security-Sentinel** is a modular edge network security framework developed to eliminate the "Complexity-Visibility Gap" in edge infrastructure[cite: 3]. It integrates real-time packet analysis with AI-driven authentication to provide autonomous, proactive threat mitigation at the network perimeter[cite: 3, 5, 7].
+<p align="center">
+  <b>Bridging the Complexity-Visibility Gap in Edge Network Infrastructure.</b>
+</p>
 
+---
 
+## ⚡ Overview
+**Edge-Security-Sentinel** is a high-availability, AI-driven security framework designed for Raspberry Pi. It transforms edge hardware into a hardened network perimeter, capable of autonomous threat detection and intelligent mitigation.
 
-## 📸 System Visuals
+## 🏗️ System Architecture
+The system employs a dual-bus architecture, separating the core math engine from service modules to ensure operational stability:
 
-*(在 GitHub 上上传截图到 `/docs` 文件夹，并替换下方链接)*
+*   **Core Math Engine**: Utilizes heuristic Z-Score and PPS (Packets Per Second) analysis to identify volumetric DDoS threats in real-time.
+*   **Security Layer (IPS)**: An automated governor that interfaces with `iptables` to perform granular threat mitigation.
+*   **Biometric Access Gateway**: Implements InsightFace-powered facial recognition, acting as a "Zero-Trust" physical key for system management.
+*   **Modular Dashboard**: A centralized console for visualizing throughput, traffic logs, and firewall block lists.
+
+## 📸 Operational Visuals
+*(Upload your screenshots to `/docs` and update these paths)*
 
 | **Modular Console Dashboard** | **Telegram Real-time Alerting** |
-| --- | --- |
-|  |  |
-| *Visualizing throughput & IPS status* | *Remote threat notifications & C2* |
+| :---: | :---: |
+| ![Dashboard](docs/dashboard.png) | ![Telegram](docs/telegram.png) |
+| *Traffic analysis & IPS status* | *Remote threat notifications & C2* |
+| ![Dashboard](docs/dashboard2.png) | ![telegram](docs/telegram.png) |
 
 
 ## 🏗️ Core Architecture
@@ -24,32 +39,56 @@ A modular edge network security monitoring system featuring real-time traffic an
 The system is built on a decoupled architecture for maximum stability[cite: 6, 7]:
 
 ### 1. Hardware Interface (`display_lcd.py`)
-
+![Hardware](docs/Hardware.png)
 Provides physical status updates. It uses a **No-Clear-Write** methodology to update 20x4 LCD screens, preventing flickering and character garbage[cite: 4].
 
 * **Key Code**: `lcd.cursor_pos = (0, 0); lcd.write_string(lines[0][:20])`
 
 ### 2. Network Sniffer (`edge_probe_v2.py`)
-
+![Network_Sniffer](docs/Network_Sniffer.png)
 A Scapy-based sentinel that monitors `wlan0`. It aggregates packets and computes telemetry data locally before pushing it to the Math Engine[cite: 5].
 
 * **Key Code**: `sniff(iface=TARGET_INTERFACE, prn=packet_callback, store=0)`
 
 ### 3. Math Core Engine (Node-RED)
-
+![CoreMathEngine](docs/CoreMathEngine.png)
 The central intelligence. It calculates **Z-Score anomalies** to detect DDoS volumetric floods.
 
 * **Logic**: `zScore = (currentPPS - mean) / stdDev`[cite: 7].
 
-### 4. Biometric Auth (`face_auth.py` & `local_face_api.py`)
+
+### 👤4. Biometric Enrollment & Verification (`face_auth.py` & `local_face_api.py`)
+![BiometricEnrollment-Verification2](docs/BiometricEnrollment-Verification2.png)
+The system enforces strict biometric access control to prevent unauthorized tampering.
 
 Uses the **InsightFace (antelopev2)** model to perform 1:1 cosine similarity matching[cite: 1, 2].
 
 * **Key Code**: `sim = np.dot(emb1, emb2) / (norm1 * norm2)`[cite: 2].
+## A. Enrollment (Registration)
+To register the administrator, capture a reference image and save it to the system:
+```bash
+sudo rpicam-still -t 3000 --width 640 --height 480 -o /home/mj/admin.jpg
+```
+
+Ensure the image is well-lit and clearly shows your face as it will serve as the unique authentication template. 
+![Dashboard](docs/BiometricEnrollment-Verification.png)
+
+
+B. Verification (Access Check)The system utilizes face_auth.py to initiate secure access control. Upon execution, the system performs a live capture (/tmp/auth_frame.jpg) and compares the similarity score against your admin.jpg template.  Bashsudo python3 /home/mj/face_auth.py
+AUTHORIZED:mj: Access granted; probe and control services are enabled.
+DENIED:UNKNOWN_FACE_SCORE_xx: Verification rejected due to low confidence.
+DENIED:NO_FACE_DETECTED: Capture failed to identify facial features.
+
+###🛠️ Deployment ProtocolStart AI Backend: Ensure the recognition API is running as a background service[cite: 1]:
+```Bash
+sudo python3 /home/mj/face_auth.py
+```
 
 
 
 ## 🛠️ Modules & Features
+
+<img src="docs/Telegram.jpg" width="700">
 
 ### Telegram Integration (`node-red-contrib-telegrambot`)
 
