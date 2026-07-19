@@ -38,7 +38,8 @@ The system is built on a decoupled architecture for maximum stability:
 
 <img width="600" height="400" alt="image" src="docs/Hardware.png" />
 Provides physical status updates. It uses a **No-Clear-Write** methodology to update 20x4 LCD screens, preventing flickering and character garbage.
-**Key Code**: 
+
+Key Code: 
 ```bash
 `lcd.cursor_pos = (0, 0); lcd.write_string(lines[0][:20])`
 ```
@@ -48,7 +49,7 @@ Provides physical status updates. It uses a **No-Clear-Write** methodology to up
 <img width="600" height="400" alt="image" src="docs/Network_Sniffer.png" />
 A Scapy-based sentinel that monitors `wlan0`. It aggregates packets and computes telemetry data locally before pushing it to the Math Engine.
 
-**Key Code**: 
+Key Code: 
 ```bash
 `sniff(iface=TARGET_INTERFACE, prn=packet_callback, store=0)`
 ```
