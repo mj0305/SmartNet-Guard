@@ -38,14 +38,20 @@ The system is built on a decoupled architecture for maximum stability:
 
 <img width="600" height="400" alt="image" src="docs/Hardware.png" />
 Provides physical status updates. It uses a **No-Clear-Write** methodology to update 20x4 LCD screens, preventing flickering and character garbage.
-*   **Key Code**: `lcd.cursor_pos = (0, 0); lcd.write_string(lines[0][:20])`
+**Key Code**: 
+```bash
+`lcd.cursor_pos = (0, 0); lcd.write_string(lines[0][:20])`
+```
 
 ### 2. Network Sniffer (`edge_probe_v2.py`)
 
 <img width="600" height="400" alt="image" src="docs/Network_Sniffer.png" />
 A Scapy-based sentinel that monitors `wlan0`. It aggregates packets and computes telemetry data locally before pushing it to the Math Engine.
 
-**Key Code**: `sniff(iface=TARGET_INTERFACE, prn=packet_callback, store=0)`
+**Key Code**: 
+```bash
+`sniff(iface=TARGET_INTERFACE, prn=packet_callback, store=0)`
+```
 
 ### 3. Math Core Engine (Node-RED)
 
@@ -53,7 +59,9 @@ A Scapy-based sentinel that monitors `wlan0`. It aggregates packets and computes
 The central intelligence. It calculates **Z-Score anomalies** to detect DDoS volumetric floods.
 
 **Logic Definition**:
+```bash
 $$ Z = \frac{\text{currentPPS} - \mu}{\sigma} $$
+```
 
 ### 4. Biometric Enrollment & Verification (`face_auth.py` & `local_face_api.py`)
 
